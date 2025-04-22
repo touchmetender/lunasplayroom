@@ -42,7 +42,7 @@ with open(output_file, "w", encoding="utf-8") as f:
         print(f"🔍 {name} → {logo_url}")
         
         f.write(f"""
-<div class="grid-item generated-game" onclick="openGame('{game_url}')">
+<div class="grid-item generated-game" onclick="openLink('{game_url}')">
   <img src="{logo_url}" alt="{name}" />
   <div class="name">{name}</div>
 </div>
