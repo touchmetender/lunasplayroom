@@ -20,7 +20,7 @@ game_dirs = [item['name'] for item in items if item['type'] == 'dir']
 with open(output_file, "w", encoding="utf-8") as f:
     for game in sorted(game_dirs):
         game_url = f"{raw_base_url}/{game}/index.html"
-        thumb_url = f"{raw_base_url}/{game}/thumbnail.jpg"
+        thumb_url = f"{raw_base_url}/{game}/tlogo.png"
         name = game.replace("-", " ").title()
 
         f.write(f"""
