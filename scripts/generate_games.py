@@ -1,24 +1,27 @@
 import os
 import requests
-from bs4 import BeautifulSoup
 
-base_url = "https://github.com/touchmetender/GameFiles/tree/master/games"
+# Constants
+api_url = "https://api.github.com/repos/touchmetender/GameFiles/contents/games"
 raw_base_url = "https://touchmetender.github.io/GameFiles/games"
-
 output_file = "generated/games.html"
+
+# Make sure output folder exists
 os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
-# Get list of games from GitHub HTML
-res = requests.get(base_url)
-soup = BeautifulSoup(res.text, "html.parser")
-game_dirs = [a.text.strip() for a in soup.select('a.js-navigation-open') if a['href'].startswith('/touchmetender/GameFiles/tree/master/games/')]
+# Get folder list from GitHub API
+res = requests.get(api_url)
+items = res.json()
 
-# Generate HTML
+# Filter only directories
+game_dirs = [item['name'] for item in items if item['type'] == 'dir']
+
+# Write HTML blocks
 with open(output_file, "w", encoding="utf-8") as f:
     for game in sorted(game_dirs):
         game_url = f"{raw_base_url}/{game}/index.html"
         thumb_url = f"{raw_base_url}/{game}/thumbnail.jpg"
-        name = game.replace('-', ' ').title()
+        name = game.replace("-", " ").title()
 
         f.write(f"""
 <div class="grid-item" onclick="openGame('{game_url}')">
@@ -26,4 +29,5 @@ with open(output_file, "w", encoding="utf-8") as f:
   <div class="name">{name}</div>
 </div>
 """)
-print("✅ Game blocks saved.")
+
+print("✅ Game blocks saved to", output_file)
