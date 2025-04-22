@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>Luna's Playroom</title>
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#000000">
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#000000" />
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -74,52 +74,12 @@
 </head>
 <body>
   <div class="title">Luna's Playroom</div>
-  <div class="grid-container">
-    <!-- Game/App Tiles -->
-    <div class="grid-item" onclick="openLink('https://embed.cbeebies.com/bluey-keepy-uppy/')">
-      <img src="https://static.wikia.nocookie.net/cb348679-a1ce-4a39-8ae4-07a404f97175/scale-to-width/755" alt="Bluey: Keepy Uppy">
-      <div class="grid-name">Bluey: Keepy Uppy</div>
-    </div>
-    <div class="grid-item" onclick="openLink('https://embed.cbeebies.com/bluey-magic-xylophone/')">
-      <img src="https://i.ytimg.com/vi/zE9reGGjWXU/maxresdefault.jpg" alt="Bluey: Magic Xylophone">
-      <div class="grid-name">Bluey: Magic Xylophone</div>
-    </div>
-    <div class="grid-item" onclick="openLink('https://storage.y8.com/y8-studio/unity_webgl/RHMInteractive/thumb_wars/?key=y8&value=default')">
-      <img src="https://img.y8.com/cloud/v2-y8-thumbs-small-thumbnails-001/167539/small.gif" alt="Thumb Wars">
-      <div class="grid-name">Thumb Wars</div>
-    </div>
-    <div class="grid-item" onclick="openLink('https://html5.gamedistribution.com/26272dd59da64ef58bfd83f89ad4ae2f/')">
-      <img src="https://img.y8.com/cloud/v2-y8-thumbs-small-thumbnails-001/187649/small.gif" alt="Sprunki">
-      <div class="grid-name">Sprunki</div>
-    </div>
-    <div class="grid-item" onclick="openLink('https://html5.gamedistribution.com/rvvASMiM/2467f82a01334a8b8d5d8cb8b15e1a18/')">
-      <img src="https://img.y8.com/cloud/v2-y8-thumbs-small-thumbnails-001/150698/small.gif" alt="Align 4 Big">
-      <div class="grid-name">Align 4 Big</div>
-    </div>
-    <div class="grid-item" onclick="openLink('https://storage.y8.com/y8-studio/html5/yyg/incredible_kids_dentist/')">
-      <img src="https://img.y8.com/cloud/v2-y8-thumbs-small-thumbnails-001/197019/small.gif" alt="Incredible Kids Dentist">
-      <div class="grid-name">Incredible Kids Dentist</div>
-    </div>
-    <div class="grid-item" onclick="openLink('https://storage.y8.com/y8-studio/html5/natalibt/tic_tac_toe_master/')">
-      <img src="https://img.y8.com/cloud/v2-y8-thumbs-small-thumbnails-001/148352/small.gif" alt="Tic Tac Toe Master">
-      <div class="grid-name">Tic Tac Toe Master</div>
-    </div>
-    <div class="grid-item" onclick="openLink('https://storage.y8.com/y8-studio/html5/natalibt/racer_training/')">
-      <img src="https://img.y8.com/cloud/v2-y8-thumbs-small-thumbnails-001/201559/small.gif" alt="Racer Training">
-      <div class="grid-name">Racer Training</div>
-    </div>
-    <div class="grid-item" onclick="openLink('https://game.snapgame.io/games/crush-it/index.html')">
-      <img src="https://img.y8.com/cloud/v2-y8-thumbs-small-thumbnails-001/197945/small.gif" alt="Crush It">
-      <div class="grid-name">Crush It</div>
-    </div>
-    <div class="grid-item" onclick="openLink('https://storage.y8.com/y8-studio/html5/annu/fish_eat_fish_3players_ads22_y8/')">
-      <img src="https://img.y8.com/cloud/y8-thumbs/63188/small.gif" alt="Fish Eat Fish">
-      <div class="grid-name">Fish Eat Fish 3 Players</div>
-    </div>
-    <div class="grid-item" onclick="openLink('https://html5.gamemonetize.co/vrge6ojoozy8o9ras6vwlr1861utbjv8/')">
-      <img src="https://img.y8.com/cloud/v2-y8-thumbs-small-thumbnails-001/146594/small.gif" alt="Water Color">
-      <div class="grid-name">Water Color</div>
-    </div>
+
+  <div class="grid-container" id="games-grid">
+    <!-- Manual games will be loaded here first -->
+  </div>
+
+  <div class="grid-container" id="more-soon">
     <div class="grid-item">
       <div style="font-size: 40px;">❓</div>
       <div class="grid-name">More Soon!</div>
@@ -148,21 +108,33 @@
       });
     }
 
+    function loadGames(url) {
+      return fetch(url)
+        .then(response => response.text())
+        .then(html => {
+          const wrapper = document.createElement('div');
+          wrapper.innerHTML = html;
+          document.getElementById('games-grid').append(...wrapper.children);
+        })
+        .catch(error => {
+          console.error(`❌ Failed to load ${url}:`, error);
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
       blockAds();
       setInterval(blockAds, 1500);
+
+      // Load manual games first, then generated ones
+      loadGames('manual-games.html')
+        .then(() => loadGames('generated/games.html'));
     });
 
-    // Register Service Worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function () {
         navigator.serviceWorker.register('service-worker.js')
-          .then(function (registration) {
-            console.log('ServiceWorker registered with scope:', registration.scope);
-          })
-          .catch(function (error) {
-            console.log('ServiceWorker registration failed:', error);
-          });
+          .then(reg => console.log('ServiceWorker registered:', reg.scope))
+          .catch(err => console.log('ServiceWorker failed:', err));
       });
     }
   </script>
