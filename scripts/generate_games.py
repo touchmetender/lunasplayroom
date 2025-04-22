@@ -6,46 +6,47 @@ import time
 # Constants
 api_url = "https://api.github.com/repos/touchmetender/GameFiles/contents/games"
 output_file = "generated/games.html"
-search_url = "https://duckduckgo.com/html/"
 fallback_image = "https://via.placeholder.com/150"
 
-# Ensure output directory exists
+headers = {
+    "User-Agent": "Mozilla/5.0"
+}
+
+def get_bing_image_url(query):
+    search_query = f"{query} game logo"
+    url = f"https://www.bing.com/images/search?q={search_query.replace(' ', '+')}&form=HDRSC2"
+    try:
+        response = requests.get(url, headers=headers)
+        soup = BeautifulSoup(response.text, 'html.parser')
+        img_tag = soup.find("img", {"class": "mimg"})
+        if img_tag and img_tag.get("src"):
+            return img_tag["src"]
+    except Exception as e:
+        print(f"Error for {query}: {e}")
+    return fallback_image
+
+# Create output directory if needed
 os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
-# Get list of game directories from GitHub
+# Get game folders from GitHub
 res = requests.get(api_url)
 items = res.json()
 game_dirs = [item['name'] for item in items if item['type'] == 'dir']
 
-def get_duckduckgo_image_url(query):
-    try:
-        headers = {"User-Agent": "Mozilla/5.0"}
-        params = {"q": f"{query} game logo"}
-        response = requests.post(search_url, data=params, headers=headers)
-        soup = BeautifulSoup(response.text, 'html.parser')
-        img = soup.find('img')
-        if img and img.get("src"):
-            return img["src"]
-        else:
-            return fallback_image
-    except Exception as e:
-        print(f"❌ Error fetching logo for {query}: {e}")
-        return fallback_image
-
-# Write HTML blocks
+# Write HTML
 with open(output_file, "w", encoding="utf-8") as f:
     for game in sorted(game_dirs):
         name = game.replace("-", " ").title()
         game_url = f"https://touchmetender.github.io/GameFiles/games/{game}/index.html"
-        logo_url = get_duckduckgo_image_url(name)
-        print(f"🖼️  {name} → {logo_url}")
-
+        logo_url = get_bing_image_url(name)
+        print(f"🔍 {name} → {logo_url}")
+        
         f.write(f"""
 <div class="grid-item generated-game" onclick="openGame('{game_url}')">
   <img src="{logo_url}" alt="{name}" />
   <div class="name">{name}</div>
 </div>
 """)
-        time.sleep(1)  # Delay to avoid rate limiting
+        time.sleep(1)
 
-print("✅ Finished generating game blocks.")
+print("✅ Game blocks with logos generated to", output_file)
