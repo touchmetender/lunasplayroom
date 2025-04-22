@@ -1,46 +1,51 @@
 import os
 import requests
 from bs4 import BeautifulSoup
+import time
 
 # Constants
 api_url = "https://api.github.com/repos/touchmetender/GameFiles/contents/games"
 output_file = "generated/games.html"
 search_url = "https://duckduckgo.com/html/"
+fallback_image = "https://via.placeholder.com/150"
 
-# Make sure output folder exists
+# Ensure output directory exists
 os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
-# Get folder list from GitHub API
+# Get list of game directories from GitHub
 res = requests.get(api_url)
 items = res.json()
-
-# Filter only directories (games)
 game_dirs = [item['name'] for item in items if item['type'] == 'dir']
 
-def search_duckduckgo_image(query):
-    """Search DuckDuckGo and return first image URL."""
+def get_duckduckgo_image_url(query):
     try:
-        params = {"q": f"{query} game logo"}
         headers = {"User-Agent": "Mozilla/5.0"}
-        res = requests.post(search_url, data=params, headers=headers)
-        soup = BeautifulSoup(res.text, "html.parser")
-        img = soup.find("img", class_="tile--img__img")
-        return img["src"] if img else "https://via.placeholder.com/150"
-    except:
-        return "https://via.placeholder.com/150"
+        params = {"q": f"{query} game logo"}
+        response = requests.post(search_url, data=params, headers=headers)
+        soup = BeautifulSoup(response.text, 'html.parser')
+        img = soup.find('img')
+        if img and img.get("src"):
+            return img["src"]
+        else:
+            return fallback_image
+    except Exception as e:
+        print(f"❌ Error fetching logo for {query}: {e}")
+        return fallback_image
 
-# Generate HTML with thumbnails
+# Write HTML blocks
 with open(output_file, "w", encoding="utf-8") as f:
     for game in sorted(game_dirs):
         name = game.replace("-", " ").title()
         game_url = f"https://touchmetender.github.io/GameFiles/games/{game}/index.html"
-        thumb_url = search_duckduckgo_image(name)
+        logo_url = get_duckduckgo_image_url(name)
+        print(f"🖼️  {name} → {logo_url}")
 
         f.write(f"""
 <div class="grid-item generated-game" onclick="openGame('{game_url}')">
-  <img src="{thumb_url}" alt="{name}" />
+  <img src="{logo_url}" alt="{name}" />
   <div class="name">{name}</div>
 </div>
 """)
+        time.sleep(1)  # Delay to avoid rate limiting
 
-print("✅ Game blocks saved to", output_file)
+print("✅ Finished generating game blocks.")
