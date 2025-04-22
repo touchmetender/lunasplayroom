@@ -2,12 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <title>Luna's Playroom</title>
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#000000" />
   <style>
-    body {
+    html, body {
       font-family: Arial, sans-serif;
       margin: 0;
       padding: 0;
@@ -15,6 +18,9 @@
       color: white;
       text-align: center;
       overflow-x: hidden;
+      width: 100vw;
+      height: 100vh;
+      touch-action: manipulation;
     }
 
     .title {
@@ -29,10 +35,10 @@
 
     .grid-container {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(45%, 1fr));
       gap: 10px;
       padding: 10px;
-      max-width: 600px;
+      max-width: 100%;
       margin: auto;
     }
 
@@ -76,7 +82,7 @@
   <div class="title">Luna's Playroom</div>
 
   <div class="grid-container" id="games-grid">
-    <!-- Manual games will be loaded here first -->
+    <!-- Manual games will load here -->
   </div>
 
   <div class="grid-container" id="more-soon">
@@ -109,7 +115,8 @@
     }
 
     function loadGames(url) {
-      return fetch(url)
+      const noCacheUrl = `${url}?nocache=${Date.now()}`;
+      return fetch(noCacheUrl)
         .then(response => response.text())
         .then(html => {
           const wrapper = document.createElement('div');
@@ -122,10 +129,20 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+      // Clear cookies
+      document.cookie.split(";").forEach(cookie => {
+        const name = cookie.split("=")[0].trim();
+        document.cookie = `${name}=;expires=${new Date(0).toUTCString()};path=/`;
+      });
+
+      // Clear storage
+      localStorage.clear();
+      sessionStorage.clear();
+
       blockAds();
       setInterval(blockAds, 1500);
 
-      // Load manual games first, then generated ones
+      // Load manual games first, then generated
       loadGames('manual-games.html')
         .then(() => loadGames('generated/games.html'));
     });
